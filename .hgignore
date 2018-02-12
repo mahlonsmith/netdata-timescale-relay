@@ -1,0 +1,4 @@
+syntax: glob
+.cache
+*.html
+netdata_tsrelay
