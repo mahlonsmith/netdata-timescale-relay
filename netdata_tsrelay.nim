@@ -139,8 +139,6 @@ proc serverloop: void =
     ## and start serving incoming netdata streams.
     let db = open( "", "", "", conf.dbopts )
     echo "Successfully connected to the backend database."
-    #SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720 * INTERVAL '1 second';'
-    #db.close
     
     var server = newSocket()
     echo "Listening for incoming connections on port ", conf.listen_port, "..."
