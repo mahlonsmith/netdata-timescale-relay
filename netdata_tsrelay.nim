@@ -129,10 +129,14 @@ proc process( client: Socket, db: DBConn ): void =
         return
 
     var samples = parse_data( raw_data )
+    if samples.len == 0: return
+
+    db.exec sql( "BEGIN" )
     for timestamp, sample in samples:
         var host = sample[ "hostname" ].get_str
         sample.delete( "hostname" )
         db.exec sql( INSERT_SQL ), timestamp, host, sample
+    db.exec sql( "COMMIT" )
 
 proc serverloop: void =
     ## Open a database connection, bind to the listening socket,
