@@ -68,6 +68,6 @@ example configuration for `netdata.conf`:
     prefix             = n
     update every       = 10
     buffer on failures = 6
-    send charts matching = !cpu.cpu* !ipv6* nfs.rpc net.* net_drops.* net_packets.* !system.interrupts* system.* disk.* disk_space.* disk_ops.* mem.* users.*
+    send charts matching = !cpu.cpu* !ipv6* !users* nfs.rpc net.* net_drops.* net_packets.* !system.interrupts* system.* disk.* disk_space.* disk_ops.* mem.*
 ```
 
