@@ -191,7 +191,6 @@ proc runthread( client: Socket, address: string, db: DBConn, conf: Config ): voi
             " in ", hl($( round(cpu_time() - t0, 3) ), fgWhite, bright=true), " seconds."
             # " ", hl($(round((get_occupied_mem()/1024/1024),1)), fgWhite, bright=true), "MB memory used."
         )
-    when defined( testing ): dumpNumberOfInstances()
 
 
 proc serverloop: void =
@@ -200,7 +199,9 @@ proc serverloop: void =
     let db = open( "", "", "", conf.dbopts )
     if conf.verbose: echo( "Successfully connected to the backend database.".hl( fgGreen ) )
 
-    var server = newSocket()
+    var
+        conn_count = 0
+        server = newSocket()
 
     server.set_sock_opt( OptReuseAddr, true )
     server.bind_addr( Port(conf.listen_port), conf.listen_addr )
@@ -219,16 +220,18 @@ proc serverloop: void =
         var client  = newSocket()
         var address = ""
 
+        # Force a garbage collection pass.
+        #
+        conn_count = conn_count + 1
+        if conn_count == 25:
+            when defined( testing ): echo "Forcing GC pass."
+            GC_full_collect()
+            conn_count = 1
+
         client.close
         server.acceptAddr( client, address ) # blocking call
         spawn runthread( client, address, db, conf )
-
-
-proc atexit() {.noconv.} =
-    ## Exit cleanly after waiting on any running threads.
-    echo "Exiting..."
-    sync()
-    quit( 0 )
+        when defined( testing ): dumpNumberOfInstances()
 
 
 proc parse_cmdline: void =
@@ -273,10 +276,9 @@ proc parse_cmdline: void =
 
 when isMainModule:
     system.addQuitProc( resetAttributes )
-    system.addQuitProc( atexit )
 
     parse_cmdline()
-
     if conf.debug: echo hl( $conf, fgYellow )
+
     serverloop()
 
