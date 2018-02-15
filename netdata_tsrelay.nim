@@ -200,9 +200,7 @@ proc serverloop: void =
     let db = open( "", "", "", conf.dbopts )
     if conf.verbose: echo( "Successfully connected to the backend database.".hl( fgGreen ) )
 
-    var
-        server = newSocket()
-        client = newSocket()
+    var server = newSocket()
 
     server.set_sock_opt( OptReuseAddr, true )
     server.bind_addr( Port(conf.listen_port), conf.listen_addr )
@@ -218,7 +216,10 @@ proc serverloop: void =
         echo ""
 
     while true:
+        var client  = newSocket()
         var address = ""
+
+        client.close
         server.acceptAddr( client, address ) # blocking call
         spawn runthread( client, address, db, conf )
 
