@@ -1,5 +1,4 @@
 # vim: set et nosta sw=4 ts=4 :
-# im: set et nosta sw=4 ts=4 ft=nim : 
 #
 # Copyright (c) 2018, Mahlon E. Smith <mahlon@martini.nu>
 # All rights reserved.
@@ -75,6 +74,7 @@ type
 
 # Global configuration
 var conf: Config
+
 
 proc hl( msg: string, fg: ForegroundColor, bright=false ): string =
     ## Quick wrapper for color formatting a string, since the 'terminal'
@@ -171,8 +171,7 @@ proc write_to_database( samples: seq[ JsonNode ] ): void =
 
 
 proc process( client: Socket, address: string ): void =
-    ## Do the work for a connected client within a thread.
-    ## Returns the formatted json data keyed on sample time.
+    ## Do the work for a connected client within child process.
     let t0 = cpu_time()
     var raw_data = client.fetch_data
 
@@ -205,8 +204,14 @@ proc serverloop( conf: Config ): void =
     ## Open a database connection, bind to the listening socket,
     ## and start serving incoming netdata streams.
     let db = open( "", "", "", conf.dbopts )
-    if conf.verbose: echo( "Successfully tested connection to the backend database.".hl( fgGreen ) )
     db.close
+    if conf.verbose: echo( "Successfully tested connection to the backend database.".hl( fgGreen ) )
+
+    # Ensure children are properly reaped.
+    #
+    var sa: Sigaction
+    sa.sa_handler = SIG_IGN
+    discard sigaction( SIGCHLD, sa )
 
     # Setup listening socket.
     #
@@ -230,9 +235,9 @@ proc serverloop( conf: Config ): void =
         var
             client  = new Socket
             address = ""
-            status: cint = 0
 
-        server.acceptAddr( client, address ) # block
+        # Block, waiting for new connections.
+        server.acceptAddr( client, address )
 
         if fork() == 0:
             server.close
@@ -240,8 +245,6 @@ proc serverloop( conf: Config ): void =
             quit( 0 )
 
         client.close
-
-        discard waitpid( P_ALL, status, WNOHANG ) # reap all previous children
         when defined( testing ): dumpNumberOfInstances()
 
 
@@ -294,9 +297,7 @@ proc parse_cmdline: Config =
 
 when isMainModule:
     system.addQuitProc( resetAttributes )
-
     conf = parse_cmdline()
     if conf.debug: echo hl( $conf, fgYellow )
-
     serverloop( conf )
 
