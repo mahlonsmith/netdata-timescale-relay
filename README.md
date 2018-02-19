@@ -6,9 +6,9 @@ What's this?
 ------------
 
 This program is designed to accept JSON streams from
-[Netdata](http://netdata.io) clients, and write metrics to a PostgreSQL table -
-specifically, [Timescale](http://timescale.com) backed tables (though
-that's not technically a requirement.)
+[Netdata](https://my-netdata.io/) clients, and write metrics to a
+PostgreSQL table - specifically, [Timescale](http://timescale.com)
+backed tables (though that's not technically a requirement.)
 
 
 Installation
@@ -56,7 +56,8 @@ SELECT create_hypertable( 'netdata', 'time', chunk_time_interval => 604800000000
 ### Netdata
 
 You'll likely want to pare down what netdata is sending.  Here's an
-example configuration for `netdata.conf`:
+example configuration for `netdata.conf` -- you will want to season
+this to taste.
 
 ```
 [backend]
