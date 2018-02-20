@@ -1,7 +1,7 @@
 
 FILES = netdata_tsrelay.nim
 
-default: development
+default: release
 
 debug: ${FILES}
 	nim --assertions:on --nimcache:.cache c ${FILES}
