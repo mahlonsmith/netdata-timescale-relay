@@ -84,12 +84,12 @@ Running the Relay
   * [-d|--debug]:    Debug mode.  Show incoming data.
   * [--dbopts]:      PostgreSQL connection information.  (See below for more details.)
   * [-h|--help]:     Display quick help text.
-  * [--listen-addr]: A specific IP address to listen on.  Defaults to INADDR_ANY.
+  * [--listen-addr]: A specific IP address to listen on.  Defaults to **INADDR_ANY**.
   * [--listen-port]: The port to listen for netdata JSON streams.
-                     Default is 14866.
+                     Default is **14866**.
   * [-T|--dbtable]:  Change the table name to insert to.  Defaults to **netdata**.
   * [-t|--timeout]:  Maximum time in milliseconds to wait for data.  Slow
-                     connections may need to increase this from the default 500 ms.
+                     connections may need to increase this from the default **500** ms.
   * [-v|--version]:  Show version.
 
 
@@ -100,7 +100,7 @@ Flags that require arguments must include an '=' or ':' character.
 
   * --timeout=1000  *valid*
   * --timeout:1000  *valid*
-  * --t:1000  *valid*
+  * -t:1000  *valid*
   * --timeout 1000  *invalid*
   * -t 1000  *invalid*
 
@@ -109,10 +109,10 @@ All database connection options are passed as a key/val string to the
 
 	"host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay"
 
-Reference
-https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-
-PARAMKEYWORDS for all available options (including how to store
-passwords in a seperate file, enable SSL mode, etc.)
+Reference the [PostgreSQL
+Documentation](https://www.postgresql.org/docs/current/static/libpq-conn
+ect.html#LIBPQ-PARAMKEYWORDS) for all available options (including how
+to store passwords in a separate file, enable SSL mode, etc.)
 
 
 ### Daemonizing
@@ -131,4 +131,26 @@ Here's an example using the simple
 		-u nobody -cr \
 		/usr/local/bin/netdata_tsrelay \
 			--dbopts="dbname=metrics user=metrics host=db-master port=6432 application_name=netdata-tsrelay"
+
+### Scaling
+
+Though performant by default, if you're going to be storing a LOT of
+data (or have a lot of netdata clients), here are some suggestions for
+getting the most bang for your buck:
+
+  * Use the [pgbouncer](https://pgbouncer.github.io/) connection
+    pooler.
+  * DNS round robin the hostname where **netdata_tsrelay** lives across
+    *N* hosts -- you can horizontally scale without any gotchas.
+  * Edit your **netdata.conf** file to only send the metrics you are
+    interested in.
+  * Decrease the frequency at which netdata sends its data. (When in
+    "average" mode, it averages over that time automatically.)
+  * Use [Timescale](http://timescale.com) hypertables.
+  * Add database indexes specific to how you intend to consume the data.
+  * Use the PostgreSQL
+    [JSON Operators](https://www.postgresql.org/docs/current/static/functions-json.html#FUNCTIONS-JSONB-OP-TABLE),
+	which take advantage of GIN indexing.
+  * Put convenience SQL VIEWs around the data you're fetching later, for
+    easier graph building with [Grafana](https://grafana.com/) (or whatever.)
 
