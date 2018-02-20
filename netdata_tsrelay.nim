@@ -51,13 +51,15 @@ const
   -q: Quiet mode.  No output at all.  Ignored if -d is supplied.
   -d: Debug: Show incoming and parsed data.
   -v: Display version number.
+  -T: Change the destination table name from the default 'netdata'.
+  -t: Alter the maximum time (in ms) an open socket waits for data.  Default: 500ms.
   -h: Help.  You're lookin' at it.
 
 The default connection string is:
   "host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay"
     """
     INSERT_SQL = """
-    INSERT INTO netdata
+    INSERT INTO $1
         ( time, host, metrics )
     VALUES
         ( 'epoch'::timestamptz + ? * '1 second'::interval, ?, ? )
@@ -67,10 +69,13 @@ The default connection string is:
 type
     Config = object of RootObj
         dbopts:      string  # The postgresql connection parameters.  (See https://www.postgresql.org/docs/current/static/libpq-connect.html)
-        listen_port: int     # The port to listen for incoming connections
+        dbtable:     string  # The name of the table to write to.
+        listen_port: int     # The port to listen for incoming connections.
         listen_addr: string  # The IP address listen for incoming connections.  Defaults to inaddr_any.
         verbose:     bool    # Be informative
         debug:       bool    # Spew out raw data
+        insertsql:   string  # The SQL insert string after interpolating the table name.
+        timeout:     int     # How long to block, waiting on connection data.
 
 # Global configuration
 var conf: Config
@@ -91,10 +96,10 @@ proc fetch_data( client: Socket ): string =
     ## line and wait for stream timeout to determine a "sample".
     var buf: string = nil
     try:
-        result = client.recv_line( timeout=500 )
+        result = client.recv_line( timeout=conf.timeout )
         if result != "" and not result.is_nil: result = result & "\n"
         while buf != "":
-            buf = client.recv_line( timeout=500 )
+            buf = client.recv_line( timeout=conf.timeout )
             if buf != "" and not buf.is_nil: result = result & buf & "\n"
     except TimeoutError:
         discard
@@ -111,7 +116,7 @@ proc parse_data( data: string ): seq[ JsonNode ] =
 
     for sample in split_lines( data ):
         if sample == "" or sample.is_nil: continue
-        #if conf.debug: echo sample.hl( fgBlack, bright=true )
+        if conf.debug: echo sample.hl( fgBlack, bright=true )
 
         var parsed: JsonNode
         try:
@@ -158,7 +163,7 @@ proc write_to_database( samples: seq[ JsonNode ] ): void =
                 host = sample[ "hostname" ].get_str
             sample.delete( "timestamp" )
             sample.delete( "hostname" )
-            db.exec sql( INSERT_SQL ), timestamp, host, sample
+            db.exec sql( conf.insertsql ), timestamp, host, sample
         db.exec sql( "COMMIT" )
     except:
         let
@@ -255,10 +260,13 @@ proc parse_cmdline: Config =
     #
     result = Config(
         dbopts: "host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay",
+        dbtable: "netdata",
         listen_port: 14866,
         listen_addr: "0.0.0.0",
         verbose: true,
-        debug: false
+        debug: false,
+        timeout: 500,
+        insertsql: INSERT_SQL % [ "netdata" ]
     )
 
     # always set debug mode if development build.
@@ -281,12 +289,17 @@ proc parse_cmdline: Config =
 
                 of "quiet", "q":
                     result.verbose = false
-            
+
                 of "version", "v":
                     echo hl( "netdata_tsrelay " & VERSION, fgWhite, bright=true )
                     quit( 0 )
-               
+
+                of "timeout", "t": result.timeout = val.parse_int
+
+                of "dbtable", "T":
+                    result.insertsql = INSERT_SQL % [ val ]
                 of "dbopts": result.dbopts = val
+
                 of "listen-addr", "a": result.listen_addr = val
                 of "listen-port", "p": result.listen_port = val.parse_int
 
