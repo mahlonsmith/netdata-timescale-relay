@@ -107,7 +107,10 @@ Flags that require arguments must include an '=' or ':' character.
 All database connection options are passed as a key/val string to the
 *dbopts* flag.  The default is:
 
-	"host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay"
+	"host=localhost dbname=netdata application_name=netdata-tsrelay"
+
+... which uses the default PostgreSQL port, and connects as the running
+user.
 
 Reference the [PostgreSQL
 Documentation](https://www.postgresql.org/docs/current/static/libpq-conn
