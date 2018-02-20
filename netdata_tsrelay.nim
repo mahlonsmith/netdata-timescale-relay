@@ -56,7 +56,7 @@ const
   -h: Help.  You're lookin' at it.
 
 The default connection string is:
-  "host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay"
+  "host=localhost dbname=netdata application_name=netdata-tsrelay"
     """
     INSERT_SQL = """
     INSERT INTO $1
@@ -259,7 +259,7 @@ proc parse_cmdline: Config =
     # Config object defaults.
     #
     result = Config(
-        dbopts: "host=localhost port=5432 dbname=netdata user=netdata application_name=netdata-tsrelay",
+        dbopts: "host=localhost dbname=netdata application_name=netdata-tsrelay",
         dbtable: "netdata",
         listen_port: 14866,
         listen_addr: "0.0.0.0",
