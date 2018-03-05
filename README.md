@@ -44,10 +44,10 @@ functional indexing, etc.  See PostgreSQL documentation for details.
 Strongly encouraged:  Promote this table to a Timescale "hypertable".
 See [Timescale](http://timescale.com) docs for that, but a quick example
 to partition automatically at weekly boundaries would look something
-like:
+like this, if you're running v0.9.0 or better:
 
 ```sql
-SELECT create_hypertable( 'netdata', 'time', chunk_time_interval => 604800000000 );
+SELECT create_hypertable( 'netdata', 'time', migrate_data => true, chunk_time_interval => '1 week'::interval );
 ```
 
 Timescale also has some great examples and advice for efficient [JSON
