@@ -44,7 +44,7 @@ import
 
 
 const
-    VERSION = "v0.1.0"
+    VERSION = "v0.1.1"
     USAGE = """
 ./netdata_tsrelay [-q][-v][-h] --dbopts="[PostgreSQL connection string]" --listen-port=14866 --listen-addr=0.0.0.0
 
@@ -130,7 +130,7 @@ proc parse_data( data: string ): seq[ JsonNode ] =
         #
         var pivot: JsonNode
         try:
-            let key = parsed["timestamp"].get_num
+            let key = parsed[ "timestamp" ].get_num
 
             if pivoted_data.has_key( key ):
                 pivot = pivoted_data[ key ]
@@ -160,7 +160,7 @@ proc write_to_database( samples: seq[ JsonNode ] ): void =
         for sample in samples:
             var
                 timestamp = sample[ "timestamp" ].get_num
-                host = sample[ "hostname" ].get_str
+                host = sample[ "hostname" ].get_str.to_lowerascii
             sample.delete( "timestamp" )
             sample.delete( "hostname" )
             db.exec sql( conf.insertsql ), timestamp, host, sample
