@@ -35,7 +35,7 @@ import
     nativesockets,
     net,
     os,
-    parseopt2,
+    parseopt,
     posix,
     strutils,
     tables,
@@ -44,7 +44,7 @@ import
 
 
 const
-    VERSION = "v0.1.1"
+    VERSION = "v0.2.0"
     USAGE = """
 ./netdata_tsrelay [-q][-v][-h] --dbopts="[PostgreSQL connection string]" --listen-port=14866 --listen-addr=0.0.0.0
 
@@ -94,13 +94,13 @@ proc hl( msg: string, fg: ForegroundColor, bright=false ): string =
 proc fetch_data( client: Socket ): string =
     ## Netdata JSON backend doesn't send a length, so we read line by
     ## line and wait for stream timeout to determine a "sample".
-    var buf: string = nil
+    var buf: string = ""
     try:
         result = client.recv_line( timeout=conf.timeout )
-        if result != "" and not result.is_nil: result = result & "\n"
+        if result != "": result = result & "\n"
         while buf != "":
             buf = client.recv_line( timeout=conf.timeout )
-            if buf != "" and not buf.is_nil: result = result & buf & "\n"
+            if buf != "": result = result & buf & "\n"
     except TimeoutError:
         discard
 
@@ -109,13 +109,13 @@ proc parse_data( data: string ): seq[ JsonNode ] =
     ## Given a raw +data+ string, parse JSON and return a sequence
     ## of JSON samples. Netdata can buffer multiple samples in one batch.
     result = @[]
-    if data == "" or data.is_nil: return
+    if data == "": return
 
     # Hash of sample timeperiods to pivoted json data
     var pivoted_data = init_table[ BiggestInt, JsonNode ]()
 
     for sample in split_lines( data ):
-        if sample == "" or sample.is_nil: continue
+        if sample == "": continue
         if conf.debug: echo sample.hl( fgBlack, bright=true )
 
         var parsed: JsonNode
@@ -130,7 +130,7 @@ proc parse_data( data: string ): seq[ JsonNode ] =
         #
         var pivot: JsonNode
         try:
-            let key = parsed[ "timestamp" ].get_num
+            let key = parsed[ "timestamp" ].get_int
 
             if pivoted_data.has_key( key ):
                 pivot = pivoted_data[ key ]
@@ -159,7 +159,7 @@ proc write_to_database( samples: seq[ JsonNode ] ): void =
         db.exec sql( "BEGIN" )
         for sample in samples:
             var
-                timestamp = sample[ "timestamp" ].get_num
+                timestamp = sample[ "timestamp" ].get_int
                 host = sample[ "hostname" ].get_str.to_lowerascii
             sample.delete( "timestamp" )
             sample.delete( "hostname" )
