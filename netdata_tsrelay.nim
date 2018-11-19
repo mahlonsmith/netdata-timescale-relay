@@ -46,7 +46,7 @@ import
 const
     VERSION = "v0.2.0"
     USAGE = """
-./netdata_tsrelay [-q][-v][-h] --dbopts="[PostgreSQL connection string]" --listen-port=14866 --listen-addr=0.0.0.0
+./netdata_tsrelay [-d][-h][-q][-t][-T][-v] --dbopts="[PostgreSQL connection string]" --listen-port=14866 --listen-addr=0.0.0.0
 
   -q: Quiet mode.  No output at all.  Ignored if -d is supplied.
   -d: Debug: Show incoming and parsed data.
@@ -94,15 +94,13 @@ proc hl( msg: string, fg: ForegroundColor, bright=false ): string =
 proc fetch_data( client: Socket ): string =
     ## Netdata JSON backend doesn't send a length, so we read line by
     ## line and wait for stream timeout to determine a "sample".
-    var buf: string = ""
+    var buf = ""
     try:
-        result = client.recv_line( timeout=conf.timeout )
-        if result != "": result = result & "\n"
-        while buf != "":
-            buf = client.recv_line( timeout=conf.timeout )
+        while true:
+            client.readline( buf, timeout=conf.timeout )
             if buf != "": result = result & buf & "\n"
     except TimeoutError:
-        discard
+        return
 
 
 proc parse_data( data: string ): seq[ JsonNode ] =
