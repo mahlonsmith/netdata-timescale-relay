@@ -58,20 +58,26 @@ and queries.
 ### Netdata
 
 You'll likely want to pare down what netdata is sending.  Here's an
-example configuration for `netdata.conf` -- season this to taste (what
+example configuration for `exporting.conf` -- season this to taste (what
 charts to send and frequency.)
 
+Note: This example uses the "exporting" module introduced in
+Netdata v1.23.  If your netdata is older than that, you'll be using
+the deprecated "backend" instead in the main `netdata.conf` file.
+
 ```
-[backend]
-    hostname           = your-hostname
-    enabled            = yes
-    type               = json
-    data source        = average
-    destination        = machine-where-netdata-tsrelay-lives:14866
-    prefix             = n
-    update every       = 60
-    buffer on failures = 5
-    send charts matching = !cpu.cpu* !ipv6* !users* nfs.rpc net.* net_drops.* net_packets.* !system.interrupts* system.* disk.* disk_space.* disk_ops.* mem.*
+[exporting:global]
+	enabled = yes
+
+[json:timescale]
+	hostname             = your-hostname
+	enabled              = yes
+	data source          = average
+	destination          = localhost:14866
+	prefix               = netdata
+	update every         = 10
+	buffer on failures   = 10
+	send charts matching = !cpu.cpu* !ipv6* !users.* nfs.rpc net.* net_drops.* net_packets.* !system.interrupts* system.* disk.* disk_space.* disk_ops.* mem.*
 ```
 
 
@@ -82,15 +88,22 @@ Running the Relay
 
   * [-q|--quiet]:    Quiet mode.  No output at all. Ignored if -d is supplied.
   * [-d|--debug]:    Debug mode.  Show incoming data.
-  * [--dbopts]:      PostgreSQL connection information.  (See below for more details.)
+  * [-D|--dropconn]: Drop the TCP connection to netdata between samples.
+                     This may be more efficient depending on your environment and
+                     number of clients.  Defaults to false.
+  * [-o|--dbopts]:   PostgreSQL connection information.  (See below for more details.)
   * [-h|--help]:     Display quick help text.
-  * [--listen-addr]: A specific IP address to listen on.  Defaults to **INADDR_ANY**.
-  * [--listen-port]: The port to listen for netdata JSON streams.
+  * [-a|--listen-addr]: A specific IP address to listen on.  Defaults to **INADDR_ANY**.
+  * [-p|--listen-port]: The port to listen for netdata JSON streams.
                      Default is **14866**.
+  * [-P|--persistent]: Don't disconnect from the database between samples. This may be
+                     more efficient with a small number of clients, when not using a
+                     pooler, or with a very high sample size/rate.  Defaults to false.
   * [-T|--dbtable]:  Change the table name to insert to.  Defaults to **netdata**.
   * [-t|--timeout]:  Maximum time in milliseconds to wait for data.  Slow
                      connections may need to increase this from the default **500** ms.
   * [-v|--version]:  Show version.
+
 
 
 **Notes**
@@ -112,10 +125,9 @@ All database connection options are passed as a key/val string to the
 ... which uses the default PostgreSQL port, and connects as the running
 user.
 
-Reference the [PostgreSQL
-Documentation](https://www.postgresql.org/docs/current/static/libpq-conn
-ect.html#LIBPQ-PARAMKEYWORDS) for all available options (including how
-to store passwords in a separate file, enable SSL mode, etc.)
+Reference the [PostgreSQL Documentation](https://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS)
+for all available options (including how to store passwords in a
+separate file, enable SSL mode, etc.)
 
 
 ### Daemonizing

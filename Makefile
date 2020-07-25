@@ -3,12 +3,12 @@ FILES = netdata_tsrelay.nim
 
 default: release
 
-debug: ${FILES}
-	nim --assertions:on --nimcache:.cache c ${FILES}
+autobuild:
+	find . -type f -iname \*.nim | entr -c make development
 
 development: ${FILES}
 	# can use gdb with this...
-	nim --debugInfo --linedir:on -d:testing -d:nimTypeNames --nimcache:.cache c ${FILES}
+	nim --debugInfo --assertions:on --linedir:on -d:testing -d:nimTypeNames --nimcache:.cache c ${FILES}
 
 debugger: ${FILES}
 	nim --debugger:on --nimcache:.cache c ${FILES}
