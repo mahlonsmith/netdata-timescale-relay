@@ -67,10 +67,10 @@ the deprecated "backend" instead in the main `netdata.conf` file.
 
 ```
 [exporting:global]
-	enabled = yes
+	enabled  = yes
+	hostname = your-hostname
 
 [json:timescale]
-	hostname             = your-hostname
 	enabled              = yes
 	data source          = average
 	destination          = localhost:14866

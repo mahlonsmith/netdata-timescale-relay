@@ -85,7 +85,7 @@ const
     Alter the maximum time (in ms) an open socket waits for data
     before processing the sample.  Default: 500ms.
 
-  -v --verbose:
+  -v --version:
     Display version number.
 
     """
