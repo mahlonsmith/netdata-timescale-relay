@@ -190,6 +190,9 @@ proc parse_data( data: string ): seq[ JsonNode ] =
             pivot[ "hostname" ] = parsed[ "hostname" ]
             pivot[ "timestamp" ] = parsed[ "timestamp" ]
             pivot[ name ] = parsed[ "value" ]
+
+            if parsed.has_key( "labels" ):
+                pivot[ "labels" ] = parsed[ "labels" ]
         except:
             continue
 
