@@ -51,7 +51,7 @@ SELECT create_hypertable( 'netdata', 'time', migrate_data => true, chunk_time_in
 ```
 
 Timescale also has some great examples and advice for efficient [JSON
-indexing](http://docs.timescale.com/v0.8/using-timescaledb/schema-management#json)
+indexing](https://docs.timescale.com/timescaledb/latest/how-to-guides/schema-management/json/#json)
 and queries.
 
 
