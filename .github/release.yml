@@ -1,0 +1,56 @@
+---
+name: Add artifacts
+
+on:
+  workflow_dispatch:
+
+  release:
+    name: 'Build and upload artifacts'
+    runs-on: ubuntu-latest
+
+    env:
+      CHOOSENIM_CHOOSE_VERSION: stable
+      CHOOSENIM_NO_ANALYTICS: 1
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install packages
+        run: sudo apt-get install -y musl-tools libpq-dev
+
+      - name: Update $PATH
+        shell: bash
+        run: |
+          echo $GITHUB_WORKSPACE >> $GITHUB_PATH
+
+      - name: Install Nim
+        run: |
+          curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
+          sh init.sh -y
+
+      - name: Build
+        run: |
+          nim build -v --opt:size --gc:orc -d:release --gcc.exe:musl-gcc --gcc.linkerexe:musl-gcc netdata_tsrelay.nim
+
+      - name: Get current release
+        id: current-release
+        uses: InsonusK/get-latest-release@v1.0.1
+        with:
+          myToken: ${{ github.token }}
+          exclude_types: 'release'
+          view_top: 1
+
+      - name: Create artifact
+        shell: bash
+        run: zip nimhttpd_${{steps.current-release.outputs.tag_name}}_linux_x64.zip nimhttpd
+
+      - name: Upload to current release
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: 'nimhttpd_v*.zip'
+          overwrite: true
+          tag_name: ${{steps.current-release.outputs.tag_name}}
+          release_id: ${{steps.current-release.outputs.id }}
+          verbose: true
