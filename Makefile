@@ -14,7 +14,7 @@ debugger: ${FILES}
 	nim --debugger:on --nimcache:.cache c ${FILES}
 
 release: ${FILES}
-	nim -d:release --opt:speed --parallelBuild:0 --nimcache:.cache c ${FILES}
+	nim -d:release -d:nimDebugDlOpen --opt:speed --parallelBuild:0 --nimcache:.cache c ${FILES}
 
 docs:
 	nim doc ${FILES}
