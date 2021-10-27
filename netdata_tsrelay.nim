@@ -31,11 +31,11 @@
 import
     db_postgres,
     json,
-    math,
     nativesockets,
     net,
     parseopt,
     posix,
+    std/exitprocs,
     strutils,
     strformat,
     tables,
@@ -382,7 +382,7 @@ proc parse_cmdline: Config =
 
 
 when isMainModule:
-    system.addQuitProc( resetAttributes )
+    addExitProc( resetAttributes )
     conf = parse_cmdline()
     if conf.debug: echo hl( $conf, fgYellow )
     serverloop( conf )
