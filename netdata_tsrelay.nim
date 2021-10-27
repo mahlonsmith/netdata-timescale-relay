@@ -30,17 +30,17 @@
 
 import
     db_postgres,
-    json,
-    nativesockets,
-    net,
-    parseopt,
-    posix,
+    std/json,
+    std/nativesockets,
+    std/net,
+    std/parseopt,
+    std/posix,
     std/exitprocs,
-    strutils,
-    strformat,
-    tables,
-    terminal,
-    times
+    std/strutils,
+    std/strformat,
+    std/tables,
+    std/terminal,
+    std/times
 
 
 const
