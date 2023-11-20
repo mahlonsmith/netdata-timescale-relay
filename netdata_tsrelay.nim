@@ -29,7 +29,7 @@
 
 
 import
-    db_postgres,
+    db_connector/db_postgres,
     std/json,
     std/nativesockets,
     std/net,
