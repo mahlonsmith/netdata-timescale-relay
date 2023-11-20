@@ -169,3 +169,10 @@ getting the most bang for your buck:
   * Put convenience SQL VIEWs around the data you're fetching later, for
     easier graph building with [Grafana](https://grafana.com/) (or whatever.)
 
+# Deploying as Service
+  * Compile netdata_relay
+  * Edit `netdata-relay.service` file to match your parameters
+  * Move `netdata-relay.service` to `/etc/systemd/system`
+  * Run `systemctl daemon-reload`
+  * Run `systemctl enable --now netdata-relay`
+  * If you want debug you can check journal with `journalctl -u netdata-relay`

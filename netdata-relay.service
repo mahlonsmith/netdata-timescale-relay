@@ -1,0 +1,13 @@
+[Unit]
+Description=NetData relay
+Documentation=https://github.com/Debezium-performance/netdata-timescale-relay
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Restart=on-failure
+ExecStart=/bin/bash -lc '/root/netdata-timescale-relay/netdata_tsrelay --dbopts="dbname= user=postgres host= port=5432 application_name= password="'
+
+[Install]
+WantedBy=multi-user.target
